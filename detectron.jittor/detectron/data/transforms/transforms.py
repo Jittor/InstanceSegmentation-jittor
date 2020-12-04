@@ -69,7 +69,7 @@ class Resize(object):
         if isinstance(image,jt.Var):
             image = T.resize(image,size)
         else:
-            image = image.resize(size)
+            image = image.resize(size[::-1],Image.BILINEAR)
         if target is None:
             return image
         target = target.resize(image.size)
@@ -509,7 +509,8 @@ class ColorJitter(object):
 
 class ToTensor(object):
     def __call__(self, image, target):
-        return T.to_tensor(image), target
+        image = T.to_tensor(image)
+        return image, target
 
 
 def normalize(img,mean,std):

@@ -85,7 +85,7 @@ class Detect(object):
             conf_scores = jt.max(cur_scores, dim=0)
         
             keep = (conf_scores > self.conf_thresh)
-            keep = jt.where(keep)[0]
+            # keep = jt.where(keep)[0]
 
             scores = cur_scores[:, keep]
             boxes = decoded_boxes[keep]

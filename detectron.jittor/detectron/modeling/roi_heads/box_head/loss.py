@@ -130,7 +130,6 @@ class FastRCNNLossComputation(object):
 
         class_logits = cat(class_logits, dim=0)
         box_regression = cat(box_regression, dim=0)
-        device = class_logits.device
 
         if not hasattr(self, "_proposals"):
             raise RuntimeError("subsample needs to be called before")

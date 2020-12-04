@@ -81,6 +81,7 @@ def prepare_for_coco_detection(predictions, dataset):
         img_info = dataset.get_img_info(image_id)
         image_width = img_info["width"]
         image_height = img_info["height"]
+        prediction.to_jittor()
         prediction = prediction.resize((image_width, image_height))
         prediction = prediction.convert("xywh")
 
@@ -120,6 +121,7 @@ def prepare_for_coco_segmentation(predictions, dataset):
         image_width = img_info["width"]
         image_height = img_info["height"]
         # print(prediction.get_field("mask").shape,image_height,image_width)
+        prediction.to_jittor()
         prediction = prediction.resize((image_width, image_height))
         masks = prediction.get_field("mask")
         # t = time.time()
@@ -243,6 +245,7 @@ def evaluate_box_proposals(
         img_info = dataset.get_img_info(image_id)
         image_width = img_info["width"]
         image_height = img_info["height"]
+        prediction.to_jittor()
         prediction = prediction.resize((image_width, image_height))
 
         # sort predictions in descending order

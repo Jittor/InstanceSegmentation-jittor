@@ -5,6 +5,8 @@ Implements the Generalized R-CNN framework
 
 from jittor import nn
 import jittor as jt
+import numpy as np
+import pickle
 
 from detectron.structures.image_list import to_image_list
 
@@ -55,13 +57,18 @@ class GeneralizedRCNN(nn.Module):
         #print(3,time.asctime())
         images = to_image_list(images)
         features = self.backbone(images.tensors)
-        # print('backbone',jt.mean(features[0]))
+        # for f,i in zip(features,range(len(features))):
+        #     ff = f.numpy()
+        #     tt = pickle.load(open(f'/home/lxl/tmp/feature_{i}.pkl','rb'))
+        #     print(np.mean(np.abs(ff-tt)))
+            # assert np.allclose(ff,tt,atol=1e-3)
+        # print('backbone',features[0])
         #jt.sync_all()
         #print(4,time.asctime())
         # print('Backbone',features[0].mean())
 
         proposals, proposal_losses = self.rpn(images, features, targets)
-        # print('RPN',proposals[0].bbox,proposals[0].bbox.shape)
+        # print('RPN',proposals[0].bbox,proposals[0].bbox.shape,len(proposals))
 
 
         #jt.sync_all()

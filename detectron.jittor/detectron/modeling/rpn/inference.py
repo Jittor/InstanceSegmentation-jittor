@@ -172,7 +172,7 @@ class RPNPostProcessor(Module):
         sampled_boxes = []
         num_levels = len(objectness)
         anchors = list(zip(*anchors))
-        import pickle
+        # import pickle
         # for i in range(len(anchors)):
 
         #     a = anchors[i][0]
@@ -228,7 +228,7 @@ class RPNPostProcessor(Module):
         else:
             for i in range(num_images):
                 objectness = boxlists[i].get_field("objectness")
-                import pickle
+                # import pickle
                 # pickle.dump(objectness.numpy(),open('/home/lxl/tmp_jt.pkl','wb'))
                 # objectness = pickle.load(open('/home/lxl/tmp_torch.pkl','rb'))
                 # objectness = jt.array(objectness)

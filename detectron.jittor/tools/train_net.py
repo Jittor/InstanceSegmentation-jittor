@@ -50,7 +50,7 @@ def train(cfg, local_rank, distributed):
 
     test_period = cfg.SOLVER.TEST_PERIOD
     if test_period > 0:
-        data_loader_val = make_data_loader(cfg, is_train=False, is_distributed=distributed, is_for_period=True)
+        data_loader_val = make_data_loader(cfg, is_train=False, is_for_period=True)
     else:
         data_loader_val = None
 
@@ -87,7 +87,7 @@ def run_test(cfg, model, distributed):
             output_folder = os.path.join(cfg.OUTPUT_DIR, "inference", dataset_name)
             mkdir(output_folder)
             output_folders[idx] = output_folder
-    data_loaders_val = make_data_loader(cfg, is_train=False, is_distributed=distributed)
+    data_loaders_val = make_data_loader(cfg, is_train=False)
     for output_folder, dataset_name, data_loader_val in zip(output_folders, dataset_names, data_loaders_val):
         inference(
             model,
@@ -96,7 +96,6 @@ def run_test(cfg, model, distributed):
             iou_types=iou_types,
             box_only=False if cfg.MODEL.RETINANET_ON else cfg.MODEL.RPN_ONLY,
             bbox_aug=cfg.TEST.BBOX_AUG.ENABLED,
-            device=cfg.MODEL.DEVICE,
             expected_results=cfg.TEST.EXPECTED_RESULTS,
             expected_results_sigma_tol=cfg.TEST.EXPECTED_RESULTS_SIGMA_TOL,
             output_folder=output_folder,
@@ -144,7 +143,7 @@ def main():
     logger.info("Collecting env info (might take some time)")
     logger.info("\n" + collect_env_info())
 
-    logger.info("Loaded configuration file {}".format(args.config_file))
+    # logger.info("Loaded configuration file {}".format(args.config_file))
 
     model = train(cfg, args.local_rank, False)
 

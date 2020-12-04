@@ -140,16 +140,20 @@ def train():
     if not os.path.exists(args.save_folder):
         os.mkdir(args.save_folder)
 
+    # dataset = COCODetection(image_path=cfg.dataset.train_images,
+    #                         info_file=cfg.dataset.train_info,
+    #                         transform=SSDAugmentation(MEANS))
+
     dataset = COCODetection(image_path=cfg.dataset.train_images,
                             info_file=cfg.dataset.train_info,
-                            transform=SSDAugmentation(MEANS))
-    
+                            transform=BaseTransform(MEANS))
     if args.validation_epoch > 0:
         setup_eval()
-        val_dataset = COCODetection(image_path=cfg.dataset.valid_images,
+        val_dataset = EvalCOCODetection(image_path=cfg.dataset.valid_images,
                                     info_file=cfg.dataset.valid_info,
                                     transform=BaseTransform(MEANS))
 
+    
     # Parallel wraps the underlying module, but when saving and loading we don't want that
     yolact_net = Yolact()
     net = yolact_net
@@ -194,11 +198,6 @@ def train():
 
     net = NetLoss(net, criterion)
     
-    #np.random.seed(0)
-    #hook = auto_diff.Hook('Yolact')
-    #hook.hook_module(net)
-    #hook.hook_optimizer(optimizer)
-
     
     # Initialize everything
     if not cfg.freeze_bn: yolact_net.freeze_bn() # Freeze bn so we don't kill our means
@@ -218,8 +217,8 @@ def train():
     step_index = 0
 
     dataset.set_attrs(batch_size=args.batch_size,
-                                  num_workers=0,#args.num_workers,
-                                  shuffle=True)
+                                  num_workers=args.num_workers,
+                                  shuffle=False)
     dataset.collate_batch=detection_collate
     data_loader = dataset
     
@@ -228,23 +227,25 @@ def train():
 
     global loss_types # Forms the print order
     loss_avgs  = { k: MovingAverage(100) for k in loss_types }
-
     print('Begin training!')
     print()
     # try-except so you can use ctrl+c to save early and stop training
     try:
+        # jt.profiler.start(0, 0)
+        i=0
         for epoch in range(num_epochs):
             # Resume from start_iter
             if (epoch+1)*epoch_size < iteration:
                 continue
             
             for datum in data_loader:
+                # data_loader.display_worker_status()
                 # Stop if we've reached an epoch if we're resuming from start_iter
                 if iteration == (epoch+1)*epoch_size:
                     break
 
                 # Stop at the configured number of iterations even if mid-epoch
-                if iteration == cfg.max_iter+1000:
+                if iteration == cfg.max_iter:
                     break
 
                 # Change a config setting if we've reached the specified iteration
@@ -275,7 +276,7 @@ def train():
                 #optimizer.zero_grad()
 
                 # Forward Pass + Compute loss at the same time (see CustomDataParallel and NetLoss)
-                splits = prepare_data(datum, allocation=args.batch_alloc)
+                splits = prepare_data(datum)
                 losses = net(*splits)
                 
                 losses = { k: (v).mean() for k,v in losses.items() } # Mean here because Dataparallel
@@ -283,14 +284,17 @@ def train():
                 
                 # no_inf_mean removes some components from the loss, so make sure to backward through all of it
                 # all_loss = sum([v.mean() for v in losses.values()])
-                jt.sync_all()
+                # loss.sync()
                 # Backprop
+                loss.sync()
                 optimizer.step(loss)
+                jt.sync(optimizer.param_groups[0]['params'])
                 
                 # Add the loss to the moving average for bookkeeping
                 for k in losses:
                     loss_avgs[k].add(losses[k].item())
-
+                # for k in losses:
+                #     loss_avgs[k].add(0)
                 cur_time  = time.time()
                 elapsed   = cur_time - last_time
                 last_time = cur_time
@@ -310,8 +314,10 @@ def train():
 
                 if args.log:
                     precision = 5
-                    loss_info = {k: round(float(losses[k].item()), precision) for k in losses}
-                    loss_info['T'] = round(float(loss.item()), precision)
+                    # loss_info = {k: round(float(losses[k].item()), precision) for k in losses}
+                    # loss_info['T'] = round(float(loss.item()), precision)
+                    loss_info = {k: round(float(0), precision) for k in losses}
+                    loss_info['T'] = round(float(0), precision)
 
                     if args.log_gpu:
                         log.log_gpu_stats = (iteration % 10 == 0) # nvidia-smi is sloooow
@@ -334,14 +340,16 @@ def train():
                         if args.keep_latest_interval <= 0 or iteration % args.keep_latest_interval != args.save_interval:
                             print('Deleting old save..')
                             os.remove(latest)
-            
+                i+=1
+                if i>100:break 
+            if i>100:break
             # This is done per epoch
             if args.validation_epoch > 0:
                 if epoch % args.validation_epoch == 0 and epoch > 0:
                     compute_validation_map(epoch, iteration, yolact_net, val_dataset, log if args.log else None)
         
         # Compute validation mAP after training is finished
-        compute_validation_map(epoch, iteration, yolact_net, val_dataset, log if args.log else None)
+        # compute_validation_map(epoch, iteration, yolact_net, val_dataset, log if args.log else None)
     except KeyboardInterrupt:
         if args.interrupt:
             print('Stopping early. Saving network..')
@@ -366,21 +374,22 @@ def gradinator(x):
     x.stop_grad()
     return x
 
-def prepare_data(datum, allocation:list=None):
+def prepare_data(datum):
     with jt.no_grad():
-        if allocation is None:
-            allocation = []
-            allocation.append(args.batch_size - sum(allocation)) # The rest might need more/less
-        
         images, (targets, masks, num_crowds) = datum
+        if not isinstance(images[0],jt.Var):
+            images = [jt.array(image,dtype='float32') for image in images]
 
-        cur_idx = 0
-        for alloc in allocation:
-            for _ in range(alloc):
-                images[cur_idx]  = gradinator(images[cur_idx])
-                targets[cur_idx] = gradinator(targets[cur_idx])
-                masks[cur_idx]   = gradinator(masks[cur_idx])
-                cur_idx += 1
+        if not isinstance(targets[0],jt.Var):
+            targets = [jt.array(t,dtype='float32') for t in targets]
+
+        if not isinstance(masks[0],jt.Var):
+            masks = [jt.array(m,dtype='float32') for m in masks]
+
+        for cur_idx in range(args.batch_size):
+            images[cur_idx]  = gradinator(images[cur_idx])
+            targets[cur_idx] = gradinator(targets[cur_idx])
+            masks[cur_idx]   = gradinator(masks[cur_idx])
 
         if cfg.preserve_aspect_ratio:
             # Choose a random size from the batch
@@ -390,19 +399,7 @@ def prepare_data(datum, allocation:list=None):
                 images[idx], targets[idx], masks[idx], num_crowds[idx] \
                     = enforce_size(image, target, mask, num_crowd, w, h)
         
-        cur_idx = 0
-        split_images, split_targets, split_masks, split_numcrowds \
-            = [[None for alloc in allocation] for _ in range(4)]
-
-        for device_idx, alloc in enumerate(allocation):
-            split_images[device_idx]    = jt.stack(images[cur_idx:cur_idx+alloc], dim=0)
-            split_targets[device_idx]   = targets[cur_idx:cur_idx+alloc]
-            split_masks[device_idx]     = masks[cur_idx:cur_idx+alloc]
-            split_numcrowds[device_idx] = num_crowds[cur_idx:cur_idx+alloc]
-
-            cur_idx += alloc
-
-        return split_images[0], split_targets[0], split_masks[0], split_numcrowds[0]
+        return jt.stack(images, dim=0), targets, masks, num_crowds
 
 def no_inf_mean(x:jt.Var):
     """

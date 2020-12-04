@@ -7,7 +7,6 @@ import numpy as np
 from tqdm import tqdm
 
 import jittor as jt
-from jittor.dataset import Dataset
 
     
 from lib.averageMeter import AverageMeters
@@ -50,6 +49,8 @@ def train(model, dataloader, optimizer, epoch, iteration):
     averMeters.clear()
     end = time.time()
     for i, inputs in enumerate(dataloader): 
+        for k,v in inputs.items():
+            print(type(v[0]))
         averMeters['data_time'].update(time.time() - end)
         iteration += 1
 
@@ -92,11 +93,11 @@ def train(model, dataloader, optimizer, epoch, iteration):
         
     return iteration
 
-class Dataset(Dataset):
+class Dataset(jt.dataset.Dataset):
     def __init__(self,batch_size,shuffle,num_workers):
         super().__init__(batch_size=batch_size,shuffle=shuffle,num_workers=num_workers)
-        ImageRoot = './data/coco2017/train2017'
-        AnnoFile = './data/coco2017/annotations/person_keypoints_train2017_pose2seg.json'
+        ImageRoot = '/mnt/disk/lxl/dataset/coco/images/train2017'
+        AnnoFile = '/mnt/disk/lxl/dataset/coco/annotations/person_keypoints_train2017_pose2seg.json'
         self.datainfos = CocoDatasetInfo(ImageRoot, AnnoFile, onlyperson=True, loadimg=True)
         self.total_len=len(self.datainfos)
     
@@ -123,7 +124,6 @@ class Dataset(Dataset):
         '''
         Change batch data to jittor array, such as np.ndarray, int, and float.
         '''
-     
         return batch
         
 if __name__=='__main__':

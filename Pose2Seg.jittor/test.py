@@ -1,6 +1,7 @@
 import argparse
 import numpy as np
 from tqdm import tqdm
+import torch
 import jittor as jt
 from jittor import nn
 import os.path as osp
@@ -18,19 +19,21 @@ from modeling.core import PoseAlign
 from modeling.skeleton_feat import genSkeletons
 import cv2
 
+jt.cudnn.set_max_workspace_ratio(0.0)
+
 def collate_batch(batch):
     return batch
 
 def test(model, dataset='cocoVal', logger=print,benchmark=False):    
     if dataset == 'OCHumanVal':
-        ImageRoot = './data/OCHuman/images'
-        AnnoFile = './data/OCHuman/annotations/ochuman_coco_format_val_range_0.00_1.00.json'
+        ImageRoot = '/mnt/disk/lxl/dataset/OCHuman/images'
+        AnnoFile = '/mnt/disk/lxl/dataset/OCHuman/annotations/ochuman_coco_format_val_range_0.00_1.00.json'
     elif dataset == 'OCHumanTest':
-        ImageRoot = './data/OCHuman/images'
-        AnnoFile = './data/OCHuman/annotations/ochuman_coco_format_test_range_0.00_1.00.json'
+        ImageRoot = '/mnt/disk/lxl/dataset/OCHuman/images'
+        AnnoFile = '/mnt/disk/lxl/dataset/OCHuman/annotations/ochuman_coco_format_test_range_0.00_1.00.json'
     elif dataset == 'cocoVal':
-        ImageRoot = './data/coco2017/val2017'
-        AnnoFile = './data/coco2017/annotations/person_keypoints_val2017_pose2seg.json'
+        ImageRoot = '/mnt/disk/lxl/dataset/coco/images/val2017'
+        AnnoFile = '/mnt/disk/lxl/dataset/coco/annotations/person_keypoints_val2017_pose2seg.json'
     datainfos = COCOTEST(ImageRoot, AnnoFile, onlyperson=True, loadimg=True,is_test=True)
     datainfos.batch_size=1
     datainfos.num_workers = 1
@@ -45,14 +48,14 @@ def test(model, dataset='cocoVal', logger=print,benchmark=False):
     start_time = time.time()
     outputs = []
 
-    # jt.profiler.start(0, 0)
-
-    # for i in tqdm(range(data_len)):
-    for i,batch in tqdm(enumerate(datainfos)):
-        #datainfos.display_worker_status()
+    for i in tqdm(range(data_len)):
+    # for i,batch in tqdm(enumerate(datainfos)):
         #if i>100:break
-        # rawdata = datainfos[i]
-        rawdata = batch[0]
+        if i==20:
+            start_time = time.time()
+
+        rawdata = datainfos[i]
+        # rawdata = batch[0]
         img = rawdata['data']
         image_id = rawdata['id']
         
@@ -71,7 +74,6 @@ def test(model, dataset='cocoVal', logger=print,benchmark=False):
         if benchmark:continue
         #outputs.append(output)
         for mask in output[0]:
-            #print(np.sum(mask))
             maskencode = maskUtils.encode(np.asfortranarray(mask))
             maskencode['counts'] = maskencode['counts'].decode('ascii')
             results_segm.append({
@@ -82,8 +84,6 @@ def test(model, dataset='cocoVal', logger=print,benchmark=False):
                 })
     jt.sync_all(True)
 
-    # jt.profiler.stop()
-    # jt.profiler.report()
     '''
     for output,image_id in zip(outputs,imgIds):
         for mask in output[0]:
@@ -99,7 +99,7 @@ def test(model, dataset='cocoVal', logger=print,benchmark=False):
     '''
     # print(len(results_segm))
     end_time = time.time()
-    print('fps',data_len/(end_time-start_time))
+    print('fps',(data_len-20)/(end_time-start_time))
 
     
     

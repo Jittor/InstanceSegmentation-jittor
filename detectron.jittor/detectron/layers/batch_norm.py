@@ -23,8 +23,9 @@ class FrozenBatchNorm2d(Module):
             self.running_mean = self.running_mean.float16()
             self.running_var = self.running_var.float16()
 
-        scale = self.weight / self.running_var.sqrt()
-        bias = self.bias - self.running_mean * scale
-        scale = scale.reshape(1, -1, 1, 1)
-        bias = bias.reshape(1, -1, 1, 1)
-        return x * scale + bias
+        if not hasattr(self, "_scale"):
+            scale = self.weight / self.running_var.sqrt()
+            bias = self.bias - self.running_mean * scale
+            self._scale = scale.reshape(1, -1, 1, 1)
+            self._bias = bias.reshape(1, -1, 1, 1)
+        return x * self._scale + self._bias

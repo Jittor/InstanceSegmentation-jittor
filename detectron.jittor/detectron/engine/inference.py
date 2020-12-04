@@ -18,14 +18,24 @@ import datetime
 def detach_output(output):
     for o in output:
         o.bbox = o.bbox.detach()
-        # print(o.bbox.mean(),o.bbox.shape)
         o.bbox.sync()
         for k in o.extra_fields:
             o.extra_fields[k] = o.extra_fields[k].detach()
             o.extra_fields[k].sync()
-            # if k == 'mask':
-            #     print('mask',o.extra_fields[k].shape)
     return output
+
+# def detach_output(output):
+#     for o in output:
+#         o.bbox = o.bbox.numpy()
+#         # print(o.bbox.mean(),o.bbox.shape)
+#         # o.bbox.sync()
+#         for k in o.extra_fields:
+#             # print(k,o.extra_fields[k].shape,o.extra_fields[k].dtype,o.extra_fields[k].max())
+#             o.extra_fields[k] = o.extra_fields[k].numpy()
+#             # o.extra_fields[k].sync()
+#             # if k == 'mask':
+#             #     print('mask',o.extra_fields[k].shape)
+#     return output
 
 from jittor.utils.nvtx import nvtx_scope
 
@@ -38,8 +48,16 @@ def compute_on_dataset(model, data_loader, bbox_aug, timer=None):
     data_loader.num_workers = 4
     start_time = 0
     # jt.profiler.start(0, 0)
+    import cProfile as profiler
+    # p = profiler.Profile()
+    # p.enable()
     for i, batch in enumerate(tqdm(data_loader)):
         # data_loader.display_worker_status()
+        # if i>50:
+        #     # p.disable()
+        #     # p.print_stats("cumtime")
+        #     break
+        # continue
 
         #if i<125:continue
         #jt.sync_all()
@@ -47,10 +65,10 @@ def compute_on_dataset(model, data_loader, bbox_aug, timer=None):
         #jt.display_memory_info()
         #if i<187:continue
         # if i>50:break
-        # if i==0:continue
         if i==20:
             # For fair comparison,remove jittor compiling time 
             start_time = time.time()
+            # jt.profiler.start()
 
         # with nvtx_scope("preprocess"):
         #     images, targets, image_ids = batch
@@ -110,26 +128,28 @@ def compute_on_dataset(model, data_loader, bbox_aug, timer=None):
         #     #        {img_id: result for img_id, result in zip(image_ids, output)}
         #     #    )
         #     #)
-        images, image_sizes, image_ids = batch
-        images = ImageList(jt.array(images),image_sizes)
-        # print(images.tensors.mean(),images.tensors.shape,image_sizes)
-        # print(image_ids)
-            # images = to_image_list(images,data_loader.collate_batch.size_divisible)                
-            # images.tensors = images.tensors.float32()
-        with jt.no_grad():
-            if timer:
-                timer.tic()
-            if bbox_aug:
-                output = im_detect_bbox_aug(model, images)
-            else:
-                output = model(images)
-            if timer:
-                timer.toc()
-        # jt.sync_all(True)
-        output = detach_output(output)
-        results_dict.update(
+        with nvtx_scope("preprocess"):
+            images, image_sizes, image_ids = batch
+            images = ImageList(jt.array(images),image_sizes)
+        with nvtx_scope("model"):
+            with jt.no_grad():
+                if timer:
+                    timer.tic()
+                if bbox_aug:
+                    output = im_detect_bbox_aug(model, images)
+                else:
+                    output = model(images)
+                if timer:
+                    timer.toc()
+        with nvtx_scope("detach"):
+            output = detach_output(output)
+            results_dict.update(
                     {img_id: result for img_id, result in zip(image_ids, output)}
                 )
+        # if i > 100: break
+        # if i > 10: break
+    # jt.profiler.stop()
+    # jt.profiler.report()
     
     end_time = time.time()
     print('fps',(5000-20*data_loader.batch_size)/(end_time-start_time))
@@ -140,6 +160,21 @@ def compute_on_dataset(model, data_loader, bbox_aug, timer=None):
 
     return results_dict
 
+def convert_numpy(data):
+    if hasattr(data,'cpu'):
+        data = data.cpu()
+    if hasattr(data,'numpy'):
+        return data.numpy()
+    return data
+
+def save_predictions(predictions):
+    for img_id,o in predictions.items():
+        o.bbox = convert_numpy(o.bbox)
+        for k in o.extra_fields:
+            o.extra_fields[k] = convert_numpy(o.extra_fields[k])
+    import pickle
+    pickle.dump(predictions,open('/home/lxl/tmp/predictions_jt.pkl','wb'))
+        
 
 def inference(
         model,
@@ -181,6 +216,7 @@ def inference(
 
     if output_folder:
         torch.save(predictions, os.path.join(output_folder, "predictions.pth"))
+    # save_predictions(predictions)
 
     extra_args = dict(
         box_only=box_only,
@@ -190,7 +226,7 @@ def inference(
     )
 
     # return None
-    return evaluate(dataset=dataset,
-                    predictions=predictions,
-                    output_folder=output_folder,
-                    **extra_args)
+    # return evaluate(dataset=dataset,
+    #                 predictions=predictions,
+    #                 output_folder=output_folder,
+    #                 **extra_args)

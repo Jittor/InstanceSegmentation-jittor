@@ -96,11 +96,10 @@ def do_train(
                 model,
                 # The method changes the segmentation mask format in a data loader,
                 # so every time a new data loader is created:
-                make_data_loader(cfg, is_train=False, is_distributed=False, is_for_period=True),
+                make_data_loader(cfg, is_train=False,is_for_period=True),
                 dataset_name="[Validation]",
                 iou_types=iou_types,
                 box_only=False if cfg.MODEL.RETINANET_ON else cfg.MODEL.RPN_ONLY,
-                device=cfg.MODEL.DEVICE,
                 expected_results=cfg.TEST.EXPECTED_RESULTS,
                 expected_results_sigma_tol=cfg.TEST.EXPECTED_RESULTS_SIGMA_TOL,
                 output_folder=None,

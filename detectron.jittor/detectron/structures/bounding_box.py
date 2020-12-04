@@ -40,7 +40,11 @@ class BoxList(object):
             self.to_jittor()
     
     def to_jittor(self):
-        self.bbox = jt.array(self.bbox).float32()
+        if not isinstance(self.bbox,jt.Var):
+            self.bbox = jt.array(self.bbox)
+        for k in self.extra_fields:
+            if not isinstance(self.extra_fields[k],jt.Var):
+                self.extra_fields[k] = jt.array(self.extra_fields[k])
 
     def add_field(self, field, field_data):
         self.extra_fields[field] = field_data

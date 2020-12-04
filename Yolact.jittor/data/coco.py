@@ -173,7 +173,7 @@ class COCODetection(dataset.Dataset):
             print('Warning: Augmentation output an example with no ground truth. Resampling..')
             return self.pull_item(random.randint(0, len(self.ids)-1))
 
-        return jt.array(img,dtype='float32').permute(2, 0, 1), target, masks.astype(np.bool), height, width, num_crowds
+        return img.transpose(2, 0, 1), target, masks.astype(np.bool), height, width, num_crowds
 
     def pull_image(self, index):
         '''Returns the original image object at index in PIL form
@@ -261,7 +261,7 @@ class EvalCOCODetection(dataset.Dataset):
                    target is the object returned by ``coco.loadAnns``.
         """
         im, gt, masks, h, w, num_crowds = self.pull_item(index)
-        return [self.ids[index],im, gt, masks, h,w,num_crowds]
+        return [index,im, gt, masks, h,w,num_crowds]
 
     def collate_batch(self,batch):
         return batch
@@ -448,8 +448,8 @@ def detection_collate(batch):
 
     for sample in batch:
         imgs.append(sample[0])
-        targets.append(jt.array(sample[1][0],dtype='float32'))
-        masks.append(jt.array(sample[1][1],dtype='float32'))
+        targets.append(sample[1][0])
+        masks.append(sample[1][1])
         num_crowds.append(sample[1][2])
 
     return imgs, (targets, masks, num_crowds)

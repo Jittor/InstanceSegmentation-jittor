@@ -63,7 +63,7 @@ class Matcher(object):
 
         # match_quality_matrix is M (gt) x N (predicted)
         # Max over gt elements (dim 0) to find best gt candidate for each prediction
-        matched_vals, matches = match_quality_matrix.max(dim=0)
+        matches,matched_vals = match_quality_matrix.argmax(dim=0)
         if self.allow_low_quality_matches:
             all_matches = matches.clone()
 

@@ -43,9 +43,9 @@ def intersect(box_a, box_b):
     A = box_a.shape[1]
     B = box_b.shape[1]
     max_xy =  jt.minimum(box_a[:, :, 2:].unsqueeze(2).expand((n, A, B, 2)),
-                       box_b[:, :, 2:].unsqueeze(1).expand((n, A, B, 2)))
+                         box_b[:, :, 2:].unsqueeze(1).expand((n, A, B, 2)))
     min_xy =  jt.maximum(box_a[:, :, :2].unsqueeze(2).expand((n, A, B, 2)),
-                       box_b[:, :, :2].unsqueeze(1).expand((n, A, B, 2)))
+                         box_b[:, :, :2].unsqueeze(1).expand((n, A, B, 2)))
     return  jt.clamp(max_xy - min_xy, min_v=0).prod(3)  # inter
 
 
@@ -145,7 +145,7 @@ def change(gt, priors):
     gt_h = (gt[:, 3] - gt[:, 1]).unsqueeze(1).expand(num_gt, num_priors)
 
     gt_mat =     gt.unsqueeze(1).expand(num_gt, num_priors, 4)
-    pr_mat = prior.unsqueeze(0).expand(num_gt, num_priors, 4)
+    pr_mat = priors.unsqueeze(0).expand(num_gt, num_priors, 4)
 
     diff = gt_mat - pr_mat
     diff[:, :, 0] /= gt_w
@@ -221,11 +221,11 @@ def match(pos_thresh, neg_thresh, truths, priors, labels, crowd_boxes, loc_t, co
         # Size [num_priors]
         best_crowd_idx,best_crowd_overlap = crowd_overlaps.argmax(1)
         # Set non-positives with crowd iou of over the threshold to be neutral.
-        conf[(conf <= 0) & (best_crowd_overlap > cfg.crowd_iou_threshold)] = -1
+        conf[jt.logical_and(conf <= 0,best_crowd_overlap > cfg.crowd_iou_threshold)] = -1
     
-    print('matches',matches)
+    # print('matches',matches)
     loc = encode(matches, priors, cfg.use_yolo_regressors)
-    print('loc',loc)
+    # print('loc',loc)
     loc_t[idx]  = loc    # [num_priors,4] encoded offsets to learn
     conf_t[idx] = conf   # [num_priors] top class label for each prior
     idx_t[idx]  = best_truth_idx # [num_priors] indices for lookup
@@ -243,7 +243,7 @@ def encode(matched, priors, use_yolo_regressors:bool=False):
     Return: A tensor with encoded relative coordinates in the format
             outputted by the network (see decode). Size: [num_priors, 4]
     """
-    print(use_yolo_regressors)
+    # print(use_yolo_regressors)
     if use_yolo_regressors:
         # Exactly the reverse of what we did in decode
         # In fact encode(decode(x, p), p) should be x
@@ -324,7 +324,8 @@ def log_sum_exp(x):
     Args:
         x (Variable(tensor)): conf_preds from conf layers
     """
-    x_max = x.data.max()
+    # x_max = x.data.max()
+    x_max = x.max()
     return  jt.log( jt.sum( jt.exp(x-x_max), 1)) + x_max
 
 

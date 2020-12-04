@@ -108,11 +108,11 @@ dataset_base = Config({
     'name': 'Base Dataset',
 
     # Training images and annotations
-    'train_images': '/home/lxl/dataset/coco/images/train2017',
+    'train_images': '/mnt/disk/lxl/dataset/coco/images/train2017',
     'train_info':   'path_to_annotation_file',
 
     # Validation images and annotations.
-    'valid_images': '/home/lxl/dataset/coco/images/val2017',
+    'valid_images': '/mnt/disk/lxl/dataset/coco/images/val2017',
     'valid_info':   'path_to_annotation_file',
 
     # Whether or not to load GT. If this is False, eval.py quantitative evaluation won't work.
@@ -130,8 +130,8 @@ dataset_base = Config({
 coco2014_dataset = dataset_base.copy({
     'name': 'COCO 2014',
     
-    'train_info': '/home/lxl/dataset/coco/annotations/instances_train2014.json',
-    'valid_info': '/home/lxl/dataset/coco/annotations/instances_val2014.json',
+    'train_info': '/mnt/disk/lxl/dataset/coco/annotations/instances_train2014.json',
+    'valid_info': '/mnt/disk/lxl/dataset/coco/annotations/instances_val2014.json',
 
     'label_map': COCO_LABEL_MAP
 })
@@ -139,8 +139,8 @@ coco2014_dataset = dataset_base.copy({
 coco2017_dataset = dataset_base.copy({
     'name': 'COCO 2017',
     
-    'train_info': '/home/lxl/dataset/coco/annotations/instances_train2017.json',
-    'valid_info': '/home/lxl/dataset/coco/annotations/instances_val2017.json',
+    'train_info': '/mnt/disk/lxl/dataset/coco/annotations/instances_train2017.json',
+    'valid_info': '/mnt/disk/lxl/dataset/coco/annotations/instances_val2017.json',
 
     'label_map': COCO_LABEL_MAP
 })

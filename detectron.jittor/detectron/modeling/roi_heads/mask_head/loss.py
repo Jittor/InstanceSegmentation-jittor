@@ -22,7 +22,6 @@ def project_masks_on_boxes(segmentation_masks, proposals, discretization_size):
     """
     masks = []
     M = discretization_size
-    device = proposals.bbox.device
     proposals = proposals.convert("xyxy")
     assert segmentation_masks.size == proposals.size, "{}, {}".format(
         segmentation_masks, proposals
@@ -61,7 +60,7 @@ class MaskRCNNLossComputation(object):
         # NB: need to clamp the indices because we can have a single
         # GT in the image, and matched_idxs can be -2, which goes
         # out of bounds
-        matched_targets = target[matched_idxs.clamp(min=0)]
+        matched_targets = target[matched_idxs.clamp(min_v=0)]
         matched_targets.add_field("matched_idxs", matched_idxs)
         return matched_targets
 

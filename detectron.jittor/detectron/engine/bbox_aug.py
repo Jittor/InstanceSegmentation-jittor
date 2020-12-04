@@ -1,5 +1,3 @@
-#import torch
-#import torchvision.transforms as TT
 import jittor.transform as TT
 import jittor as jt
 from detectron.config import cfg

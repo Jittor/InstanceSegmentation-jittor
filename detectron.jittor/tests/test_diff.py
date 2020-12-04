@@ -9,6 +9,7 @@ import os
 import math
 
 import pickle
+import torch
 
 os.environ['use_mkl']='0'
 
@@ -393,6 +394,7 @@ def run_fcos_model(config_file):
 
 def run_inference(config_file):
     import jittor as jt
+    from jittor_utils import auto_diff
 
     from detectron.config import cfg
     from detectron.modeling.detector import build_detection_model
@@ -402,7 +404,7 @@ def run_inference(config_file):
     from detectron.utils.logger import setup_logger
 
     jt.flags.use_cuda=1
-    #jt.cudnn.set_algorithm_cache_size = 100000
+    jt.cudnn.set_algorithm_cache_size(0)
 
     cfg.merge_from_file(config_file)
     cfg.freeze()
@@ -410,6 +412,8 @@ def run_inference(config_file):
     save_dir = ""
     logger = setup_logger("maskrcnn_benchmark", save_dir)
     model = build_detection_model(cfg)
+    # hook = auto_diff.Hook('fasterrcnn')
+    # hook.hook_module(model)
 
     output_dir = cfg.OUTPUT_DIR
     checkpointer = DetectronCheckpointer(cfg, model, save_dir=output_dir)
@@ -436,6 +440,9 @@ def run_inference(config_file):
         )
 
 def run_torch_inference(config_file):
+    import jittor as jt
+    from jittor_utils import auto_diff
+
     from maskrcnn_benchmark.config import cfg
     from maskrcnn_benchmark.modeling.detector import build_detection_model
     from maskrcnn_benchmark.utils.checkpoint import DetectronCheckpointer
@@ -449,6 +456,8 @@ def run_torch_inference(config_file):
     save_dir = ""
     model = build_detection_model(cfg)
     model = model.cuda()
+    # hook = auto_diff.Hook('fasterrcnn')
+    # hook.hook_module(model)
 
     output_dir = cfg.OUTPUT_DIR
     checkpointer = DetectronCheckpointer(cfg, model, save_dir=output_dir)
@@ -472,8 +481,10 @@ def run_torch_inference(config_file):
 
 def run_all_models():
     #config_files = sorted(get_config_files())
-    start = 7
-    start = 5
+    # import jittor as jt
+    # jt.flags.merge_loop_mismatch_threshold = 1
+
+    start = 19
 
 
     config_files = [
@@ -501,7 +512,7 @@ def run_all_models():
     ][start:start+1]
     for f in config_files:
         print(f)
-        #run_torch_inference(f)
+        # run_torch_inference(f)
         run_inference(f)
         # img_f = '/home/lxl/dataset/coco/images/val2014/COCO_val2014_000000135411.jpg'
         # remove_tmp()

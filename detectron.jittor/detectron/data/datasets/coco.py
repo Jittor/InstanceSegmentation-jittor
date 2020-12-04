@@ -150,10 +150,10 @@ class CocoDetection(VisionDataset):
 
         path = coco.loadImgs(img_id)[0]['file_name']
 
-        # img = Image.open(os.path.join(self.root, path)).convert('RGB')
-        img = cv2.imread(os.path.join(self.root, path),cv2.IMREAD_UNCHANGED)
-        img = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-        img = img.convert('RGB')
+        img = Image.open(os.path.join(self.root, path)).convert('RGB')
+        # img = cv2.imread(os.path.join(self.root, path),cv2.IMREAD_UNCHANGED)
+        # img = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+        # img = img.convert('RGB')
         # img = cv2.imread(os.path.join(self.root, path),cv2.IMREAD_UNCHANGED)
         # img = img[:,:,::-1]
         if self.transforms is not None:
@@ -204,18 +204,18 @@ class COCODataset(CocoDetection):
 
         boxes = np.array([obj["bbox"] for obj in anno])
         boxes = boxes.reshape(-1,4)
-        # boxes = jt.array(boxes).reshape(-1, 4)  # guard against no boxes
-        target =  BoxList(boxes, img.size, mode="xywh",to_jittor=False)#.convert("xyxy")
+        boxes = jt.array(boxes).reshape(-1, 4)  # guard against no boxes
+        target =  BoxList(boxes, img.size, mode="xywh").convert("xyxy")
 
         classes = [obj["category_id"] for obj in anno]
         classes = [self.json_category_id_to_contiguous_id[c] for c in classes]
-        # classes = jt.array(classes)
+        classes = jt.array(classes)
         target.add_field("labels", classes)
         
         
         if self.with_masks and anno and "segmentation" in anno[0]:
             masks = [obj["segmentation"] for obj in anno]
-            masks = SegmentationMask(masks, img.size, mode='poly',to_jittor=False)
+            masks = SegmentationMask(masks, img.size, mode='poly')
             target.add_field("masks", masks)
         
         if self.with_masks and anno and "keypoints" in anno[0]:
@@ -223,7 +223,7 @@ class COCODataset(CocoDetection):
             keypoints = PersonKeypoints(keypoints, img.size)
             target.add_field("keypoints", keypoints)
         
-        #target = target.clip_to_image(remove_empty=True)
+        target = target.clip_to_image(remove_empty=True)
 
         if self._transforms is not None:
            img, target = self._transforms(img, target)

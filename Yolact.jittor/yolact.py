@@ -8,7 +8,7 @@ from collections import defaultdict,OrderedDict
 
 from data.config import cfg, mask_type
 from layers import Detect
-from layers.interpolate import InterpolateModule
+from layers.interpolate import InterpolateModule,interpolate
 from backbone import construct_backbone
 
 from utils import timer
@@ -305,7 +305,8 @@ class FPN(nn.Module):
                 _, _, h, w = convouts[j].shape
                 #print('hh',(h,w),x.shape[-2:])
                 x = nn.interpolate(x, size=(h, w), mode=self.interpolation_mode, align_corners=False)
-            
+                # x = interpolate(x, size=(h, w), mode=self.interpolation_mode, align_corners=False)
+
             x = x + lat_layer(convouts[j])
             out[j] = x
         
@@ -595,6 +596,8 @@ class Yolact(nn.Module):
                 if cfg.mask_type == mask_type.lincomb and cfg.mask_proto_prototypes_as_features:
                     # Scale the prototypes down to the current prediction layer's size and add it as inputs
                     proto_downsampled = nn.interpolate(proto_downsampled, size=outs[idx].shape[2:], mode='bilinear', align_corners=False)
+                    # proto_downsampled = interpolate(proto_downsampled, size=outs[idx].shape[2:], mode='bilinear', align_corners=False)
+                    
                     pred_x = jt.contrib.concat([pred_x, proto_downsampled], dim=1)
 
                 # A hack for the way dataparallel works

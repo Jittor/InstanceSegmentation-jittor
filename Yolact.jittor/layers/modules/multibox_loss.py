@@ -9,8 +9,8 @@ def binary_cross_entropy(output, target):
     return - (target * jt.log(jt.maximum(output, 1e-20)) + (1 - target) * jt.log(jt.maximum(1 - output, 1e-20)))
 
 def cross_entropy_loss(output, target,reduction='mean'):
-    if len(output.shape) == 4:
-        c_dim = output.shape[1]
+    if output.ndim == 4:
+        c_dim = output.size(1)
         output = output.transpose((0, 2, 3, 1))
         output = output.reshape((-1, c_dim))
     target = target.reshape((-1, ))
@@ -117,6 +117,8 @@ class MultiBoxLoss(nn.Module):
         if cfg.use_class_existence_loss:
             class_existence_t = jt.empty((batch_size, num_classes-1),dtype=loc_data.dtype)
 
+        # jt.sync(list(predictions.values()))
+
         for idx in range(batch_size):
             truths      = targets[idx][:, :-1]
             labels[idx] = targets[idx][:, -1].int32()
@@ -124,7 +126,7 @@ class MultiBoxLoss(nn.Module):
             if cfg.use_class_existence_loss:
                 # Construct a one-hot vector for each object and collapse it into an existence vector with max
                 # Also it's fine to include the crowd annotations here
-                class_existence_t[idx] = jt.eye(num_classes-1)[labels[idx]].max(dim=0)[0]
+                class_existence_t[idx,:] = jt.eye(num_classes-1)[labels[idx]].max(dim=0)[0]
 
             # Split the crowd annotations because they come bundled in
             cur_crowds = num_crowds[idx]
@@ -143,14 +145,13 @@ class MultiBoxLoss(nn.Module):
                   truths, priors, labels[idx], crowd_boxes,
                   loc_t, conf_t, idx_t, idx, loc_data[idx])
                   
-            gt_box_t[idx] = truths[idx_t[idx]]
+            gt_box_t[idx,:,:] = truths[idx_t[idx]]
 
         # wrap targets
         loc_t.stop_grad()
         conf_t.stop_grad()
         idx_t.stop_grad()
 
-        
         pos = conf_t > 0
         num_pos = pos.sum(dim=1, keepdims=True)
         
@@ -163,7 +164,7 @@ class MultiBoxLoss(nn.Module):
         if cfg.train_boxes:
             loc_p = loc_data[pos_idx].view(-1, 4)
             loc_t = loc_t[pos_idx].view(-1, 4)
-            print(loc_t)
+            # print(loc_t)
             losses['B'] = nn.smooth_l1_loss(loc_p, loc_t, reduction='sum') * cfg.bbox_alpha
 
         if cfg.train_masks:

@@ -8,16 +8,16 @@ import jittor as jt
 from detectron.config import cfg
 from predictor import COCODemo
 
-# def load(url):
-#     """
-#     Given an url of an image, downloads the image and
-#     returns a PIL image
-#     """
-#     response = requests.get(url)
-#     pil_image = Image.open(BytesIO(response.content)).convert("RGB")
-#     # convert to BGR format
-#     image = np.array(pil_image)[:, :, [2, 1, 0]]
-#     return image
+def load(url):
+    """
+    Given an url of an image, downloads the image and
+    returns a PIL image
+    """
+    response = requests.get(url)
+    pil_image = Image.open(BytesIO(response.content)).convert("RGB")
+    # convert to BGR format
+    image = np.array(pil_image)[:, :, [2, 1, 0]]
+    return image
 
 # turn on cuda
 jt.flags.use_cuda = 1

@@ -107,6 +107,7 @@ def make_data_loader(cfg, is_train=True, start_iter=0, is_for_period=False):
         data_loader.shuffle = shuffle
         data_loader.num_workers = num_workers
         data_loader.batch_size = images_per_batch
+        data_loader.is_train = is_train
         data_loaders.append(data_loader)
     if is_train or is_for_period:
         # during training, a single (possibly concatenated) data_loader is returned
