@@ -126,7 +126,7 @@ class Pose2Seg(Module):
                 indexs = [[] for _ in range(self.bz)]
                 for id in select_ids:
                     indexs[id[0]].append(id[1])
-
+                
                 for i, (index, kpts) in enumerate(zip(indexs, self.batchkpts)):
                     self.batchkpts[i] = self.batchkpts[i][index]
                     self.batchmasks[i] = self.batchmasks[i][index]
@@ -139,8 +139,7 @@ class Pose2Seg(Module):
                                                       trans_range=(-0., 0.))[0] \
                              for img in self.batchimgs]
         
-        inputs = [cv2.warpAffine(img, matrix[0:2], (512, 512)) \
-                  for img, matrix in zip(self.batchimgs, self.inputMatrixs)]
+        inputs = [cv2.warpAffine(img, matrix[0:2], (512, 512)) for img, matrix in zip(self.batchimgs, self.inputMatrixs)]
         
         if len(inputs) == 1:
             inputs = inputs[0][np.newaxis, ...]

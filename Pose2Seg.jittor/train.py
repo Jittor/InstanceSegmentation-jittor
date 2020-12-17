@@ -41,7 +41,7 @@ timers = Timers()
 
 # Set Global AverageMeter
 averMeters = AverageMeters()
-    
+
 def train(model, dataloader, optimizer, epoch, iteration):
     # switch to train mode
     model.train()
@@ -49,8 +49,7 @@ def train(model, dataloader, optimizer, epoch, iteration):
     averMeters.clear()
     end = time.time()
     for i, inputs in enumerate(dataloader): 
-        for k,v in inputs.items():
-            print(type(v[0]))
+            
         averMeters['data_time'].update(time.time() - end)
         iteration += 1
 
@@ -95,7 +94,7 @@ def train(model, dataloader, optimizer, epoch, iteration):
 
 class Dataset(jt.dataset.Dataset):
     def __init__(self,batch_size,shuffle,num_workers):
-        super().__init__(batch_size=batch_size,shuffle=shuffle,num_workers=num_workers)
+        super().__init__(batch_size=batch_size,shuffle=shuffle,num_workers=num_workers, keep_numpy_array=True)
         ImageRoot = '/mnt/disk/lxl/dataset/coco/images/train2017'
         AnnoFile = '/mnt/disk/lxl/dataset/coco/annotations/person_keypoints_train2017_pose2seg.json'
         self.datainfos = CocoDatasetInfo(ImageRoot, AnnoFile, onlyperson=True, loadimg=True)
@@ -120,11 +119,6 @@ class Dataset(jt.dataset.Dataset):
         batchmasks = [data['masks'] for data in batch]
         return {'batchimgs': batchimgs, 'batchkpts': batchkpts, 'batchmasks':batchmasks}
 
-    def to_jittor(self, batch):
-        '''
-        Change batch data to jittor array, such as np.ndarray, int, and float.
-        '''
-        return batch
         
 if __name__=='__main__':
     jt.flags.use_cuda=1

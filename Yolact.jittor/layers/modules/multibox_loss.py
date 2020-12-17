@@ -120,7 +120,7 @@ class MultiBoxLoss(nn.Module):
         # jt.sync(list(predictions.values()))
 
         for idx in range(batch_size):
-            truths      = targets[idx][:, :-1]
+            truths      = targets[idx][:, :-1].float32()
             labels[idx] = targets[idx][:, -1].int32()
 
             if cfg.use_class_existence_loss:

@@ -229,7 +229,7 @@ class PredictionModule(nn.Module):
 
                                 prior_data += [x, y, w, h]
 
-                self.priors = jt.array(prior_data).view(-1, 4).detach()
+                self.priors = jt.array(prior_data).view(-1, 4)
                 self.priors.stop_grad()
                 self.last_img_size = (cfg._tmp_img_w, cfg._tmp_img_h)
                 self.last_conv_size = (conv_w, conv_h)
@@ -607,6 +607,7 @@ class Yolact(nn.Module):
                 p = pred_layer(pred_x)
                 
                 for k, v in p.items():
+                    # v.sync()
                     pred_outs[k].append(v)
 
         for k, v in pred_outs.items():
