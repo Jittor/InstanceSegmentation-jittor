@@ -2,8 +2,6 @@
 
 实例分割作为计算机视觉的一项基本任务，在方方面面发挥着巨大的作用，本教程使用*Jittor*框架实现了实例分割模型库
 
-实例分割模型库代码：https://github.com/Jittor/InstanceSegmentation-jittor
-
 使用以下方式获取最新的代码
 ```shell
 git clone --recurse-submodules https://github.com/Jittor/InstanceSegmentation-jittor
