@@ -1,0 +1,15 @@
+[submodule "detectron.jittor"]
+	path = detectron.jittor
+	url = git@github.com:li-xl/detectron.jittor.git
+[submodule "Yolact.jittor"]
+	path = Yolact.jittor
+	url = git@github.com:li-xl/Yolact.jittor.git
+[submodule "Pose2Seg.jittor"]
+	path = Pose2Seg.jittor
+	url = git@github.com:li-xl/Pose2Seg.jittor.git
+[submodule "yolov3.jittor"]
+	path = yolov3.jittor
+	url = git@github.com:li-xl/yolov3.jittor.git
+[submodule "ViT.jittor"]
+	path = ViT.jittor
+	url = git@github.com:li-xl/ViT.jittor.git

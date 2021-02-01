@@ -4,6 +4,30 @@
 
 实例分割模型库代码：https://github.com/Jittor/InstanceSegmentation-jittor
 
+使用以下方式获取最新的代码
+```shell
+git clone --recurse-submodules https://github.com/Jittor/InstanceSegmentation-jittor
+```
+或者
+```shell
+git clone https://github.com/Jittor/InstanceSegmentation-jittor
+cd InstanceSegmentation-jittor
+git submodule init 
+git submodule update --remote
+```
+
+本仓库为各个不同的实例分割和检测模型的合并仓库,不同的模型链接如下：
+
+Detectron.jittor: [https://github.com/li-xl/detectron.jittor](https://github.com/li-xl/detectron.jittor)
+
+Yolact.jittor: [https://github.com/li-xl/Yolact.jittor](https://github.com/li-xl/Yolact.jittor)
+
+Pose2Seg.jittor: [https://github.com/li-xl/Pose2Seg.jittor](https://github.com/li-xl/Pose2Seg.jittor)
+
+yolov3.jittor: [https://github.com/li-xl/yolov3.jittor](https://github.com/li-xl/yolov3.jittor)
+
+ViT.jittor: [https://github.com/li-xl/ViT.jittor](https://github.com/li-xl/ViT.jittor)
+
 ### 1 数据集
 
 #### 1.1 COCO数据集下载
