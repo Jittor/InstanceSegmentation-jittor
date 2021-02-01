@@ -7,6 +7,8 @@
 使用以下方式获取最新的代码
 ```shell
 git clone --recurse-submodules https://github.com/Jittor/InstanceSegmentation-jittor
+cd InstanceSegmentation-jittor
+git submodule update --remote
 ```
 或者
 ```shell
