@@ -24,7 +24,7 @@ Yolact.jittor: [https://github.com/li-xl/Yolact.jittor](https://github.com/li-xl
 
 Pose2Seg.jittor: [https://github.com/li-xl/Pose2Seg.jittor](https://github.com/li-xl/Pose2Seg.jittor)
 
-yolov3.jittor: [https://github.com/li-xl/yolov3.jittor](https://github.com/li-xl/yolov3.jittor)
+yolo.jittor: [https://github.com/li-xl/yolo.jittor](https://github.com/li-xl/yolo.jittor)
 
 ViT.jittor: [https://github.com/li-xl/ViT.jittor](https://github.com/li-xl/ViT.jittor)
 
